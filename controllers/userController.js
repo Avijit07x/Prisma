@@ -21,6 +21,18 @@ const createUser = async (req, res) => {
 	const { name, email, password } = req.body;
 	console.log(name, email);
 	try {
+		const findUser = await prisma.user.findUnique({
+			where: {
+				email,
+			},
+		});
+
+		if (findUser) {
+			return res.json({
+				success: false,
+				message: "User already exists",
+			});
+		}
 		const user = await prisma.user.create({
 			data: {
 				name,
@@ -45,8 +57,21 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
 	const { id } = req.params;
+
 	const { name, email, password } = req.body;
 	try {
+		const findUser = await prisma.user.findUnique({
+			where: {
+				id,
+			},
+		});
+
+		if (!findUser) {
+			return res.json({
+				success: false,
+				message: "User not found",
+			});
+		}
 		const user = await prisma.user.update({
 			where: { id },
 			data: { name, email, password },
@@ -77,8 +102,41 @@ const updateUser = async (req, res) => {
 	}
 };
 
+const deleteUser = async (req, res) => {
+	const { id } = req.params;
+	try {
+		const findUser = await prisma.user.findUnique({
+			where: {
+				id,
+			},
+		});
+
+		if (!findUser) {
+			return res.json({
+				success: false,
+				message: "User not found",
+			});
+		}
+		const user = await prisma.user.delete({
+			where: { id },
+		});
+		res.json({
+			success: true,
+			message: "Deleted user",
+			user,
+		});
+	} catch (error) {
+		res.json({
+			success: false,
+			message: "Error deleting user",
+			error: error.message,
+		});
+	}
+};
+
 module.exports = {
 	getUser,
 	createUser,
 	updateUser,
+	deleteUser,
 };
